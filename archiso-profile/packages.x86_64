@@ -1,0 +1,277 @@
+# =============================================================================
+# LINUX_CMP - Complete Package Manifest
+# =============================================================================
+# Each section is annotated. Order matters for dependency resolution.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# PHASE 0: Base System & Boot
+# ---------------------------------------------------------------------------
+base
+base-devel
+linux-firmware
+linux-cachyos
+linux-cachyos-headers
+mkinitcpio
+mkinitcpio-archiso
+mkinitcpio-nfs-utils
+archiso
+efibootmgr
+grub
+syslinux
+memtest86+
+amd-ucode
+intel-ucode
+
+# ---------------------------------------------------------------------------
+# PHASE 1: Core System Utilities
+# ---------------------------------------------------------------------------
+sudo
+networkmanager
+network-manager-applet
+iwd
+bluez
+bluez-utils
+pipewire
+pipewire-alsa
+pipewire-pulse
+pipewire-jack
+wireplumber
+alsa-utils
+alsa-plugins
+htop
+btop
+fastfetch
+nano
+vim
+git
+wget
+curl
+rsync
+unzip
+p7zip
+xdg-utils
+xdg-user-dirs
+polkit
+polkit-kde-agent
+dbus-broker
+power-profiles-daemon
+thermald
+fwupd
+reflector
+bash-completion
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+man-db
+man-pages
+openssh
+ntp
+usbutils
+pciutils
+lsof
+dmidecode
+hwinfo
+
+# ---------------------------------------------------------------------------
+# PHASE 2: Filesystem & Storage
+# ---------------------------------------------------------------------------
+btrfs-progs
+e2fsprogs
+xfsprogs
+ntfs-3g
+dosfstools
+exfatprogs
+gptfdisk
+parted
+gvfs
+gvfs-mtp
+gvfs-nfs
+gvfs-smb
+udisks2
+
+# ---------------------------------------------------------------------------
+# PHASE 3: KDE Plasma Desktop (Wayland-first)
+# ---------------------------------------------------------------------------
+plasma-meta
+plasma-desktop
+plasma-workspace
+plasma-wayland-protocols
+kwayland
+kscreen
+sddm
+sddm-kcm
+kde-gtk-config
+breeze
+breeze-gtk
+breeze-icons
+oxygen-icons
+xdg-desktop-portal
+xdg-desktop-portal-kde
+xdg-desktop-portal-gtk
+qt5-wayland
+qt6-wayland
+dolphin
+dolphin-plugins
+kate
+konsole
+ark
+spectacle
+gwenview
+okular
+kcalc
+kinfocenter
+ksystemlog
+partitionmanager
+plasma-systemmonitor
+kde-cli-tools
+kio-extras
+ffmpegthumbs
+kdegraphics-thumbnailers
+kimageformats
+phonon-qt5-vlc
+
+# ---------------------------------------------------------------------------
+# PHASE 4: GPU Drivers - Full Stack (NVIDIA + AMD + Intel)
+# ---------------------------------------------------------------------------
+
+# --- NVIDIA (proprietary via DKMS for kernel compatibility) ---
+nvidia-dkms
+nvidia-utils
+lib32-nvidia-utils
+nvidia-settings
+opencl-nvidia
+lib32-opencl-nvidia
+libvdpau
+lib32-libvdpau
+
+# --- AMD (open-source Mesa/RADV stack) ---
+mesa
+lib32-mesa
+vulkan-radeon
+lib32-vulkan-radeon
+libva-mesa-driver
+lib32-libva-mesa-driver
+mesa-vdpau
+lib32-mesa-vdpau
+xf86-video-amdgpu
+vulkan-tools
+
+# --- Intel (Mesa/ANV stack) ---
+vulkan-intel
+lib32-vulkan-intel
+intel-media-driver
+libva-intel-driver
+lib32-libva-intel-driver
+
+# --- Vulkan core ---
+vulkan-icd-loader
+lib32-vulkan-icd-loader
+vulkan-headers
+vulkan-validation-layers
+
+# --- Video acceleration ---
+libva
+libva-utils
+vdpauinfo
+
+# ---------------------------------------------------------------------------
+# PHASE 5: Gaming Stack
+# ---------------------------------------------------------------------------
+
+# --- Steam ---
+steam
+steam-native-runtime
+
+# --- Lutris ---
+lutris
+
+# --- Heroic Games Launcher (Chaotic-AUR) ---
+heroic-games-launcher-bin
+
+# --- Wine & Proton ---
+wine-staging
+wine-mono
+wine-gecko
+lib32-gnutls
+lib32-sdl2
+lib32-libpulse
+lib32-alsa-lib
+lib32-alsa-plugins
+lib32-libxcomposite
+lib32-libxinerama
+lib32-opencl-icd-loader
+lib32-gst-plugins-base
+lib32-gst-plugins-good
+winetricks
+protontricks
+proton-ge-custom-bin
+
+# --- Gamescope (micro-compositor for per-game Wayland) ---
+gamescope
+
+# --- Performance tools ---
+gamemode
+lib32-gamemode
+mangohud
+lib32-mangohud
+
+# --- Controller & Input ---
+game-devices-udev
+steam-devices-git
+xpadneo-dkms
+xone-dkms
+
+# ---------------------------------------------------------------------------
+# PHASE 6: Multimedia & Codecs
+# ---------------------------------------------------------------------------
+ffmpeg
+gstreamer
+gst-plugins-base
+gst-plugins-good
+gst-plugins-bad
+gst-plugins-ugly
+gst-libav
+x264
+x265
+libwebp
+vlc
+
+# ---------------------------------------------------------------------------
+# PHASE 7: Fonts
+# ---------------------------------------------------------------------------
+noto-fonts
+noto-fonts-cjk
+noto-fonts-emoji
+ttf-liberation
+ttf-dejavu
+ttf-hack-nerd
+ttf-jetbrains-mono-nerd
+
+# ---------------------------------------------------------------------------
+# PHASE 8: Networking & VPN
+# ---------------------------------------------------------------------------
+firewalld
+wireguard-tools
+openvpn
+networkmanager-openvpn
+
+# ---------------------------------------------------------------------------
+# PHASE 9: System management
+# ---------------------------------------------------------------------------
+flatpak
+packagekit
+packagekit-qt5
+discover
+
+# ---------------------------------------------------------------------------
+# PHASE 10: DKMS (kernel module rebuild on updates)
+# ---------------------------------------------------------------------------
+dkms
+linux-cachyos-headers
+
+# ---------------------------------------------------------------------------
+# PHASE 11: Compression and build tools (for AUR helpers)
+# ---------------------------------------------------------------------------
+fakeroot
+debugedit

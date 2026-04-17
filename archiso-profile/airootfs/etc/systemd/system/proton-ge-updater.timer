@@ -1,0 +1,12 @@
+[Unit]
+Description=Proton-GE Weekly Update Check
+Documentation=https://github.com/GloriousEggroll/proton-ge-custom
+
+[Timer]
+OnCalendar=weekly
+RandomizedDelaySec=3600
+Persistent=true
+OnBootSec=5min
+
+[Install]
+WantedBy=timers.target

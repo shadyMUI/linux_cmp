@@ -1,0 +1,48 @@
+# =============================================================================
+# LINUX_CMP - Default GRUB Configuration
+# /etc/default/grub
+# =============================================================================
+# Kernel command line optimized for gaming latency and GPU compatibility
+# =============================================================================
+
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=3
+GRUB_DISTRIBUTOR="Linux CMP"
+GRUB_DISABLE_SUBMENU=y
+GRUB_DISABLE_RECOVERY=true
+GRUB_TERMINAL_OUTPUT="gfxterm"
+GRUB_GFXMODE="auto"
+GRUB_GFXPAYLOAD_LINUX="keep"
+
+# =============================================================================
+# Kernel Command Line - Gaming Optimizations
+# =============================================================================
+#
+# Breakdown of parameters:
+#
+#   splash quiet loglevel=3         - Clean boot (no console spam)
+#   nowatchdog nmi_watchdog=0       - Disable watchdog timers (reduces interrupts)
+#   tsc=reliable                    - Trust TSC as clocksource (lowest latency)
+#   clocksource=tsc                - Force TSC clocksource
+#   mitigations=off                 - Disable CPU mitigations (Spectre/Meltdown)
+#                                     ~5-15% FPS gain, only for dedicated gaming rigs
+#   preempt=full                    - Full preemption (lowest latency scheduling)
+#   threadirqs                      - Thread IRQ handlers (better latency distribution)
+#   split_lock_detect=off           - Disable split lock detection (perf penalty in VMs/emulators)
+#   transparent_hugepage=always     - Enable THP for large game memory allocations
+#   hugepagesz=2M                   - Default hugepage size
+#   nvidia_drm.modeset=1            - NVIDIA DRM modesetting (required for Wayland)
+#   nvidia_drm.fbdev=1              - NVIDIA framebuffer device
+#   amdgpu.ppfeaturemask=0xffffffff - Enable all AMD power features
+#   amd_pstate=active               - AMD P-State active mode (Zen 4+)
+#   intel_pstate=active             - Intel HWP active mode
+#   pcie_aspm=off                   - Disable PCIe power saving (GPU latency)
+#   processor.max_cstate=1          - Limit CPU C-states (prevents deep sleep latency)
+#   mem_sleep_default=s2idle        - Modern standby (faster wake from suspend)
+#
+GRUB_CMDLINE_LINUX_DEFAULT="splash quiet loglevel=3 rd.udev.log_level=3 systemd.show_status=auto nowatchdog nmi_watchdog=0 tsc=reliable clocksource=tsc mitigations=off preempt=full threadirqs split_lock_detect=off transparent_hugepage=always hugepagesz=2M nvidia_drm.modeset=1 nvidia_drm.fbdev=1 amdgpu.ppfeaturemask=0xffffffff amd_pstate=active intel_pstate=active pcie_aspm=off processor.max_cstate=1 mem_sleep_default=s2idle"
+
+GRUB_CMDLINE_LINUX=""
+
+# Detect other OS installations
+GRUB_DISABLE_OS_PROBER=false

@@ -1,0 +1,18 @@
+[Unit]
+Description=LINUX_CMP GPU Auto-Detection and Driver Configuration
+DefaultDependencies=no
+After=systemd-modules-load.service
+Before=display-manager.service
+ConditionPathExists=!/var/lib/linux-cmp/gpu-configured
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/gpu-driver-setup.sh
+ExecStartPost=/usr/bin/mkdir -p /var/lib/linux-cmp
+ExecStartPost=/usr/bin/touch /var/lib/linux-cmp/gpu-configured
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Linux CMP Welcome
+Comment=First-login setup for Linux CMP gaming distribution
+Exec=/usr/local/bin/linux-cmp-welcome.sh
+Icon=applications-games
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-KDE-autostart-after=panel

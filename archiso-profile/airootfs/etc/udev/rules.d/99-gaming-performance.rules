@@ -1,0 +1,104 @@
+# =============================================================================
+# LINUX_CMP - udev Rules for Gaming Performance
+# /etc/udev/rules.d/99-gaming-performance.rules
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# I/O Scheduler: Use kyber for NVMe, mq-deadline for SATA SSDs, bfq for HDDs
+# These schedulers minimize latency for the respective storage types
+# ---------------------------------------------------------------------------
+# NVMe drives: kyber (low-latency multi-queue)
+ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/scheduler}="kyber"
+
+# SATA SSDs (non-rotational): mq-deadline
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="mq-deadline"
+
+# Rotational HDDs: bfq (fair bandwidth for concurrent access)
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"
+
+# ---------------------------------------------------------------------------
+# I/O Queue depths: optimize per device type
+# ---------------------------------------------------------------------------
+ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/nr_requests}="2048"
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="0", ATTR{queue/nr_requests}="256"
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/nr_requests}="128"
+
+# Disable I/O merging on NVMe (already fast, merging adds latency)
+ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/nomerges}="1"
+
+# Read-ahead: larger for HDDs, minimal for NVMe
+ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/read_ahead_kb}="128"
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="0", ATTR{queue/read_ahead_kb}="256"
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/read_ahead_kb}="2048"
+
+# ---------------------------------------------------------------------------
+# CPU Power: force performance governor via udev (instant, no daemon needed)
+# ---------------------------------------------------------------------------
+# Set performance scaling governor on CPU add
+ACTION=="add", SUBSYSTEM=="cpu", TEST=="cpufreq/scaling_governor", ATTR{cpufreq/scaling_governor}="performance"
+
+# Disable CPU boost limiting (allow max turbo at all times)
+ACTION=="add|change", SUBSYSTEM=="cpu", TEST=="cpufreq/boost", ATTR{cpufreq/boost}="1"
+
+# AMD P-State: prefer performance
+ACTION=="add|change", SUBSYSTEM=="cpu", TEST=="cpufreq/energy_performance_preference", ATTR{cpufreq/energy_performance_preference}="performance"
+
+# Intel HWP: prefer performance
+ACTION=="add|change", SUBSYSTEM=="cpu", TEST=="cpufreq/energy_performance_preference", ATTR{cpufreq/energy_performance_preference}="performance"
+
+# ---------------------------------------------------------------------------
+# GPU: Ensure proper permissions for GPU access (render group)
+# ---------------------------------------------------------------------------
+# DRI render nodes: allow 'render' group access
+KERNEL=="renderD[0-9]*", SUBSYSTEM=="drm", MODE="0666"
+KERNEL=="card[0-9]*", SUBSYSTEM=="drm", MODE="0666"
+
+# NVIDIA device nodes
+KERNEL=="nvidia*", MODE="0666"
+KERNEL=="nvidiactl", MODE="0666"
+KERNEL=="nvidia-uvm*", MODE="0666"
+
+# ---------------------------------------------------------------------------
+# Game Controllers / Input Devices
+# ---------------------------------------------------------------------------
+# Xbox Controllers (xpad)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="045e", ATTRS{idProduct}=="028e", MODE="0666"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="045e", ATTRS{idProduct}=="0719", MODE="0666"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="045e", ATTRS{idProduct}=="0b12", MODE="0666"
+
+# PlayStation DualSense / DualShock 4
+SUBSYSTEM=="usb", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="0ce6", MODE="0666"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="09cc", MODE="0666"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="05c4", MODE="0666"
+
+# Nintendo Switch Pro Controller
+SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="2009", MODE="0666"
+
+# Generic HID game controllers: ensure user access
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="045e", MODE="0666"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="054c", MODE="0666"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="057e", MODE="0666"
+
+# 8BitDo controllers
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2dc8", MODE="0666"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2dc8", MODE="0666"
+
+# Steam Controller / Steam Deck
+SUBSYSTEM=="usb", ATTRS{idVendor}=="28de", MODE="0666"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", MODE="0666"
+
+# ---------------------------------------------------------------------------
+# USB: Reduce USB autosuspend aggressiveness (prevents controller disconnects)
+# ---------------------------------------------------------------------------
+ACTION=="add", SUBSYSTEM=="usb", TEST=="power/autosuspend_delay_ms", ATTR{power/autosuspend_delay_ms}="-1"
+
+# ---------------------------------------------------------------------------
+# Network: Low latency tweaks for gaming network interfaces
+# ---------------------------------------------------------------------------
+# Disable ethernet power management
+ACTION=="add", SUBSYSTEM=="net", KERNEL=="eth*|enp*", RUN+="/usr/bin/ethtool -s %k wol d" RUN+="/usr/bin/ethtool --set-eee %k eee off"
+
+# ---------------------------------------------------------------------------
+# Audio: Real-time priority for PipeWire
+# ---------------------------------------------------------------------------
+KERNEL=="rtc0", GROUP="audio", MODE="0660"

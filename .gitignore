@@ -1,0 +1,16 @@
+# Build output
+out/
+*.iso
+
+# archiso work directory
+work/
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

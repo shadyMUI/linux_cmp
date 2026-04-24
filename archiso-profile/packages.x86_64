@@ -1,0 +1,97 @@
+# ============================================================
+# Arch Gaming OS — Package List (Fase 1: Sistema Base)
+# ============================================================
+# Ogni pacchetto è qui per un motivo. Se non lo è, non ci va.
+# I pacchetti delle fasi successive verranno aggiunti incrementalmente.
+
+# === Sistema Base ===
+base
+linux
+linux-firmware
+btrfs-progs
+mkinitcpio
+arch-install-scripts
+
+# === Build Tools (necessari per compilazione kernel custom in Fase 2) ===
+base-devel
+git
+zstd
+bc
+kmod
+libelf
+pahole
+cpio
+perl
+tar
+xz
+
+# === Compilatore LLVM/Clang (per LTO thin — raccomandato) ===
+clang
+llvm
+lld
+
+# === Networking ===
+networkmanager
+
+# === System Utilities ===
+sudo
+nano
+gptfdisk
+dosfstools
+pacman-contrib
+
+# === Microcode (includi entrambi, il sistema carica solo quello corretto) ===
+intel-ucode
+amd-ucode
+
+# === GPU: AMD (RADV/ACO) — Default ===
+mesa
+lib32-mesa
+vulkan-radeon
+lib32-vulkan-radeon
+vulkan-icd-loader
+lib32-vulkan-icd-loader
+libva-mesa-driver
+lib32-libva-mesa-driver
+mesa-vdpau
+lib32-mesa-vdpau
+xf86-video-amdgpu
+
+# === GPU: NVIDIA (decommentare se target NVIDIA, commentare sezione AMD) ===
+# nvidia-dkms
+# nvidia-utils
+# lib32-nvidia-utils
+# nvidia-settings
+# egl-wayland
+# libva-nvidia-driver
+
+# === Gamescope + Wayland ===
+gamescope
+wayland
+xorg-xwayland
+wlroots
+
+# === Audio: PipeWire ===
+pipewire
+pipewire-pulse
+pipewire-alsa
+pipewire-jack
+lib32-pipewire
+wireplumber
+
+# === Verification Tools ===
+vulkan-tools
+mesa-utils
+libinput
+
+# === Gaming Stack (Fase 4) ===
+steam
+gamemode
+lib32-gamemode
+mangohud
+lib32-mangohud
+cpupower
+
+# === Kiosk UX (Fase 5) ===
+plymouth
+polkit

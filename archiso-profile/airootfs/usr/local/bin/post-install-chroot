@@ -1,0 +1,151 @@
+#!/bin/bash
+# ============================================================
+# post-install-chroot — Eseguito dentro arch-chroot dall'installer
+# ============================================================
+# Questo script configura il sistema dopo pacstrap.
+# Argomento: $1 = UUID della partizione root
+# ============================================================
+
+set -euo pipefail
+
+ROOT_UUID="${1:?UUID root richiesto}"
+
+# ---- Timezone ----
+ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
+hwclock --systohc
+
+# ---- Locale ----
+sed -i 's/^#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+sed -i 's/^#it_IT.UTF-8/it_IT.UTF-8/' /etc/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+echo "KEYMAP=it" > /etc/vconsole.conf
+
+# ---- Hostname ----
+echo "gamebox" > /etc/hostname
+cat > /etc/hosts << 'EOF'
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   gamebox.localdomain gamebox
+EOF
+
+# ---- mkinitcpio ----
+# NOTA: il sistema installato ha un mkinitcpio.conf fresco dal pacchetto.
+# Dobbiamo aggiornare sia HOOKS che MODULES.
+sed -i 's/^MODULES=.*/MODULES=(amdgpu btrfs)/' /etc/mkinitcpio.conf
+sed -i 's/^HOOKS=.*/HOOKS=(base systemd plymouth autodetect microcode modconf kms keyboard block filesystems)/' /etc/mkinitcpio.conf
+# Compressione zstd
+sed -i 's/^#COMPRESSION="zstd"/COMPRESSION="zstd"/' /etc/mkinitcpio.conf
+mkinitcpio -P
+
+# ---- Bootloader (systemd-boot) ----
+bootctl install
+
+cat > /boot/loader/loader.conf << 'EOF'
+default  arch-gaming.conf
+timeout  0
+console-mode max
+editor   no
+EOF
+
+cat > /boot/loader/entries/arch-gaming.conf << EOF
+title   Arch Gaming OS
+linux   /vmlinuz-linux
+initrd  /initramfs-linux.img
+options root=UUID=${ROOT_UUID} rootflags=subvol=@ rw quiet loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3 vt.global_cursor_default=0 splash mitigations=off nowatchdog nmi_watchdog=0 tsc=reliable clocksource=tsc idle=nomwait pci=pcie_bus_perf split_lock_detect=off transparent_hugepage=always
+EOF
+
+# ---- Copia configurazioni gaming ----
+# Sysctl tuning
+cp /tmp/gaming-configs/99-gaming-sysctl.conf /etc/sysctl.d/99-gaming.conf 2>/dev/null || true
+
+# I/O scheduler udev rules
+mkdir -p /etc/udev/rules.d/
+cp /tmp/gaming-configs/60-ioschedulers.rules /etc/udev/rules.d/ 2>/dev/null || true
+
+# Security limits
+mkdir -p /etc/security/limits.d/
+cp /tmp/gaming-configs/99-gaming-limits.conf /etc/security/limits.d/99-gaming.conf 2>/dev/null || true
+
+# GPU modprobe config
+mkdir -p /etc/modprobe.d/
+cp /tmp/gaming-configs/gpu.conf /etc/modprobe.d/ 2>/dev/null || true
+
+# Pacman hooks
+mkdir -p /etc/pacman.d/hooks/
+cp /tmp/gaming-configs/00-btrfs-snapshot.hook /etc/pacman.d/hooks/ 2>/dev/null || true
+cp /tmp/gaming-configs/95-systemd-boot.hook /etc/pacman.d/hooks/ 2>/dev/null || true
+
+# Polkit power rules
+mkdir -p /etc/polkit-1/rules.d/
+cp /tmp/gaming-configs/49-gaming-power.rules /etc/polkit-1/rules.d/ 2>/dev/null || true
+
+# Gaming scripts
+for script in gaming-poweroff gaming-reboot gaming-suspend gaming-update pacman-snapshot; do
+    cp /tmp/gaming-configs/${script} /usr/local/bin/ 2>/dev/null || true
+    chmod +x /usr/local/bin/${script} 2>/dev/null || true
+done
+
+# ---- Copia skel files dalla live ISO ----
+# NOTA: pacstrap NON copia i file dall'airootfs overlay della live ISO.
+# Dobbiamo copiare .bash_profile e gamescope-session.service in /etc/skel
+# PRIMA di useradd -m, in modo che vengano copiati nella home dell'utente.
+cp /tmp/gaming-configs/.bash_profile /etc/skel/ 2>/dev/null || true
+mkdir -p /etc/skel/.config/systemd/user
+cp /tmp/gaming-configs/gamescope-session.service /etc/skel/.config/systemd/user/ 2>/dev/null || true
+
+# ---- Utente gaming ----
+# useradd -m copia /etc/skel nella home → include .bash_profile e gamescope-session.service
+useradd -m -G wheel,video,audio,input,render -s /bin/bash gamer
+echo "gamer:gamer" | chpasswd
+# Password di default: 'gamer' — l'utente dovrebbe cambiarla
+
+# Root password
+echo "root:archgaming" | chpasswd
+# Password root di default: 'archgaming'
+
+# Copia MangoHud config nella home dell'utente
+mkdir -p /home/gamer/.config/MangoHud
+cp /tmp/gaming-configs/MangoHud.conf /home/gamer/.config/MangoHud/ 2>/dev/null || true
+
+# Copia GameMode config
+cp /tmp/gaming-configs/gamemode.ini /etc/gamemode.ini 2>/dev/null || true
+
+# Fix ownership della home
+chown -R gamer:gamer /home/gamer
+
+# Sudo senza password per wheel (sistema kiosk)
+echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel-nopasswd
+chmod 0440 /etc/sudoers.d/wheel-nopasswd
+
+# ---- Abilita servizi ----
+systemctl enable NetworkManager
+systemctl enable fstrim.timer
+systemctl enable cpupower
+
+# ---- Disabilita Ctrl+Alt+Del ----
+systemctl mask ctrl-alt-del.target
+
+# ---- Autologin tty1 ----
+mkdir -p /etc/systemd/system/getty@tty1.service.d/
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << 'EOF'
+[Service]
+ExecStart=
+ExecStart=-/usr/bin/agetty --autologin gamer --noclear %I $TERM
+EOF
+
+# ---- Logind: limita TTY ----
+mkdir -p /etc/systemd/logind.conf.d/
+cat > /etc/systemd/logind.conf.d/kiosk.conf << 'EOF'
+[Login]
+NAutoVTs=2
+ReserveVT=2
+EOF
+
+# ---- PipeWire linger per utente gamer ----
+# NOTA: loginctl enable-linger NON funziona in chroot perché systemd-logind
+# non è attivo. Creiamo il file manualmente — è l'equivalente funzionale.
+mkdir -p /var/lib/systemd/linger
+touch /var/lib/systemd/linger/gamer
+
+echo ">>> Post-install chroot completato."

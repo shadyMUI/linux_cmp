@@ -1,0 +1,44 @@
+[Unit]
+Description=Gamescope Gaming Session
+Wants=pipewire.socket pipewire-pulse.socket wireplumber.service
+After=pipewire.socket pipewire-pulse.socket wireplumber.service
+
+[Service]
+Type=simple
+
+# --- GPU AMD (RADV) ---
+# NOTA: RADV_PERFTEST=gpl non necessario — GPL è default da Mesa 23.1+
+Environment=AMD_VULKAN_ICD=RADV
+Environment=MESA_DISK_CACHE_SINGLE_FILE=1
+
+# --- Gamescope / Steam ---
+Environment=ENABLE_GAMESCOPE_WSI=1
+Environment=STEAM_GAMESCOPE_HDR=1
+Environment=STEAM_GAMESCOPE_VRR_SUPPORTED=1
+Environment=STEAM_USE_MANGOAPP=1
+Environment=PROTON_ENABLE_NVAPI=1
+Environment=MANGOHUD=1
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+
+# NOTA: DXVK_ASYNC rimosso — deprecato, sostituito da GPL nativo
+
+# --- Gamescope command ---
+# Modifica -W/-H/-r per il tuo monitor
+ExecStart=/usr/bin/gamescope \
+    -W 1920 -H 1080 \
+    -w 1920 -h 1080 \
+    -r 144 \
+    -f \
+    -e \
+    --adaptive-sync \
+    --force-grab-cursor \
+    --xwayland-count 2 \
+    -- steam -bigpicture -steampal
+
+# Restart automatico se crasha
+Restart=on-failure
+RestartSec=3
+TimeoutStartSec=60
+
+[Install]
+WantedBy=default.target

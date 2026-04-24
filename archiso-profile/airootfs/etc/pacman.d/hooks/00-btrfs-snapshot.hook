@@ -1,0 +1,13 @@
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Depends = btrfs-progs
+When = PreTransaction
+Exec = /usr/local/bin/pacman-snapshot
+AbortOnFail
+Description = Creating BTRFS snapshot before transaction...

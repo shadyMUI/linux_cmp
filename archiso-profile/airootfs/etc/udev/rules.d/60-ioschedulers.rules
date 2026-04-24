@@ -1,0 +1,13 @@
+# /etc/udev/rules.d/60-ioschedulers.rules — Arch Gaming OS
+# I/O scheduler ottimale per tipo di disco
+
+# NVMe → nessuno scheduler (device ha queue interna)
+# NOTA: il pattern nvme[0-9]*n[0-9]* matcha il namespace (es. nvme0n1),
+# NON le partizioni (nvme0n1p1). ENV{DEVTYPE}=="disk" lo garantisce.
+ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="nvme[0-9]*n[0-9]*", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="none"
+
+# SATA SSD → nessuno scheduler
+ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="sd[a-z]", ENV{DEVTYPE}=="disk", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
+
+# HDD → BFQ (Budget Fair Queueing, latenza prevedibile)
+ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="sd[a-z]", ENV{DEVTYPE}=="disk", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"

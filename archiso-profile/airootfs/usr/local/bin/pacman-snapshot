@@ -1,0 +1,43 @@
+#!/bin/bash
+# ============================================================
+# pacman-snapshot — BTRFS Snapshot Manager
+# ============================================================
+# Crea uno snapshot BTRFS del root subvolume.
+# Mantiene solo gli ultimi 5 snapshot.
+# Chiamato automaticamente dal pacman hook 00-btrfs-snapshot.
+# NOTA: esce con codice != 0 se lo snapshot fallisce,
+# in modo che AbortOnFail nel hook blocchi la transazione.
+# ============================================================
+
+SNAP_DIR="/.snapshots"
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+SNAP_NAME="${TIMESTAMP}-pacman"
+
+# Verifica che siamo su BTRFS
+if ! mountpoint -q / 2>/dev/null; then
+    echo "  WARN: / non è un mountpoint, skip snapshot"
+    exit 0
+fi
+
+if ! btrfs subvolume show / &>/dev/null 2>&1; then
+    echo "  WARN: / non è un subvolume BTRFS, skip snapshot"
+    exit 0
+fi
+
+mkdir -p "${SNAP_DIR}"
+
+# Crea snapshot — se fallisce, esce con errore (AbortOnFail blocca pacman)
+if btrfs subvolume snapshot / "${SNAP_DIR}/${SNAP_NAME}" &>/dev/null; then
+    echo "  Snapshot creato: ${SNAP_NAME}"
+else
+    echo "  ERROR: impossibile creare snapshot!"
+    exit 1
+fi
+
+# Rotazione: mantieni solo gli ultimi 5
+ls -dt "${SNAP_DIR}"/*-pacman 2>/dev/null | tail -n +6 | while read -r old; do
+    btrfs subvolume delete "$old" &>/dev/null
+    echo "  Snapshot rimosso: $(basename "$old")"
+done
+
+exit 0

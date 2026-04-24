@@ -1,0 +1,40 @@
+#!/bin/bash
+# ============================================================
+# gaming-update — Arch Gaming OS Update Script
+# ============================================================
+# Aggiornamento one-command con snapshot, update e verifica.
+# Uso: sudo gaming-update
+# ============================================================
+
+set -euo pipefail
+
+[[ $EUID -ne 0 ]] && echo "Esegui come root: sudo gaming-update" && exit 1
+
+echo ""
+echo "=== Arch Gaming OS — System Update ==="
+echo ""
+
+# 1. Snapshot (ridondante con hook, ma esplicito per l'utente)
+echo ">>> Creating safety snapshot..."
+/usr/local/bin/pacman-snapshot
+
+# 2. Update
+echo ">>> Updating packages..."
+pacman -Syu --noconfirm
+
+# 3. Pulizia cache (mantieni ultime 2 versioni)
+echo ">>> Cleaning package cache..."
+paccache -rk2 2>/dev/null || true
+
+# 4. Verifica base
+echo ">>> Verifying system..."
+echo "  Kernel: $(uname -r)"
+if command -v vulkaninfo &>/dev/null; then
+    GPU=$(vulkaninfo --summary 2>/dev/null | grep "deviceName" | head -1 | awk -F= '{print $2}' | xargs)
+    echo "  Vulkan GPU: ${GPU:-N/A}"
+fi
+echo "  Gamescope: $(gamescope --version 2>/dev/null || echo 'installed')"
+echo "  Steam: $(pacman -Q steam 2>/dev/null | awk '{print $2}')"
+
+echo ""
+echo "=== Update completato. Reboot consigliato: sudo reboot ==="
